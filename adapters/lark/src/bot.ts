@@ -80,12 +80,13 @@ export class LarkBot<C extends Context = Context> extends Bot<C, LarkBot.Config>
     })
     this.logger.debug('refreshed token %s', token)
     this.token = token
-    // tenant_access_token 的最大有效期是 2 小时。
-    // 剩余有效期小于 30 分钟时，调用本接口会返回一个新的 tenant_access_token，这会同时存在两个有效的 tenant_access_token。
-    // 剩余有效期大于等于 30 分钟时，调用本接口会返回原有的 tenant_access_token。
-    // https://open.feishu.cn/document/server-docs/authentication-management/access-token/tenant_access_token_internal
     if (this._refresher) clearTimeout(this._refresher)
-    this._refresher = setTimeout(() => this.refreshToken(), Time.minute * 100)
+    // https://open.feishu.cn/document/server-docs/authentication-management/access-token/tenant_access_token_internal
+    // tenant_access_token 的最大有效期是 2 小时。
+    // 剩余有效期小于 30 分钟时，调用本接口会返回一个新的 tenant_access_token，此时会同时存在两个有效的 tenant_access_token。
+    // 剩余有效期大于等于 30 分钟时，调用本接口会返回原有的 tenant_access_token。
+    // 初次获得 token 后的半小时内必须刷新一次，因为初次获得的 token 可能是 1.5 小时前生成的。
+    this._refresher = setTimeout(() => this.refreshToken(), Time.minute * 20)
     this.online()
   }
 
